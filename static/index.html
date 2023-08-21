@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI ROOM</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            margin: auto;
+            background-color: #f0f0f0;
+        }
+
+        .chat-container {
+            max-width: 700px;
+            width: 100%;
+            margin: 50px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-history {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .chat-message {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .user-message {
+            justify-content: flex-end;
+            background-color: #DCF8C6;
+        }
+
+        .bot-message {
+            background-color: #FFFFFF;
+        }
+
+        .chatbot1-message {
+            background-color: #F1E6FF; /* Lavender */
+        }
+
+        .chatbot2-message {
+            background-color: #E6F9FF; /* Light Blue */
+        }
+
+        .chatbot3-message {
+            background-color: #FFEDCC; /* Pale Orange */
+        }
+
+        .profile-photo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: #ccc;
+        }
+
+        .message-content {
+            flex: 1;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .sender-info {
+            display: flex;
+            align-items: baseline;
+        }
+
+        .sender-name {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .chatbot-name {
+            font-size: 12px;
+            color: #888;
+            margin-left: 5px;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #888;
+            margin-left: auto;
+        }
+
+        .user-input {
+            display: flex;
+            margin-top: 10px;
+        }
+
+        .user-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .user-input button {
+            padding: 10px 16px;
+            background-color: #0084FF;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h1>AI ROOM</h1>
+        <div class="chat-history" id="chat-history">
+            <!-- Chat messages will be added here dynamically -->
+        </div>
+        <div class="user-input">
+            <!-- Chatbot seçim düğmesi -->
+            <select id="chatbot-select">
+                <option value="chatbot1">Chatbot 1</option>
+                <option value="chatbot2">Chatbot 2</option>
+                <option value="chatbot3">Chatbot 3</option>
+            </select>
+            <input type="text" id="user-input" placeholder="Type your message..." onkeydown="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+       // Function to display a chat message with code block
+function displayMessage(message, sender, chatbot, senderName, profilePhoto) {
+    var chatHistory = document.getElementById("chat-history");
+    if (!chatHistory) {
+        console.error("chat-history element not found.");
+        return;
+    }
+
+    var chatMessage = document.createElement("div");
+    chatMessage.classList.add("chat-message", sender + "-message");
+    if (sender === "bot") {
+        chatMessage.classList.add(chatbot + "-message");
+    }
+
+    var profilePhotoElem = document.createElement("img");
+    profilePhotoElem.classList.add("profile-photo");
+    profilePhotoElem.src = profilePhoto;
+
+    var messageContent = document.createElement("div");
+
+    var senderInfo = document.createElement("div");
+    senderInfo.classList.add("sender-info");
+
+    var senderNameElem = document.createElement("span");
+    senderNameElem.classList.add("sender-name");
+    senderNameElem.textContent = senderName;
+
+    var chatbotNameElem = document.createElement("span");
+    chatbotNameElem.classList.add("chatbot-name",+"--");
+    chatbotNameElem.textContent = chatbot;
+
+    senderInfo.appendChild(senderNameElem);
+    senderInfo.appendChild(chatbotNameElem);
+
+    var timestampElem = document.createElement("span");
+    timestampElem.classList.add("timestamp");
+    timestampElem.textContent = new Date().toLocaleTimeString();
+
+    messageContent.appendChild(senderInfo);
+    messageContent.appendChild(document.createElement("br"));
+
+    // Check if the message contains a code block
+    var codeBlockRegex = /```([\s\S]+?)```/g;
+    var hasCodeBlock = false;
+    var codeMatches = message.match(codeBlockRegex);
+    if (codeMatches) {
+        for (var i = 0; i < codeMatches.length; i++) {
+            var codeElem = document.createElement("code");
+            codeElem.textContent = codeMatches[i].slice(3, -3);
+            messageContent.appendChild(codeElem);
+        }
+        hasCodeBlock = true;
+    }
+
+    if (!hasCodeBlock) {
+        messageContent.appendChild(document.createTextNode(message));
+    }
+
+    messageContent.appendChild(timestampElem);
+
+    chatMessage.appendChild(profilePhotoElem);
+    chatMessage.appendChild(messageContent);
+
+    chatHistory.appendChild(chatMessage);
+}
+
+
+        // Function to handle Enter key press event in the input field
+        function handleKeyPress(event) {
+            if (event.keyCode === 13) { // Enter key code is 13
+                sendMessage();
+            }
+        }
+
+        // Function to send user's message and receive AI responses
+        function sendMessage() {
+            var userInput = document.getElementById("user-input").value;
+
+            if (userInput.trim() === "") {
+                return;
+            }
+
+            // Clear the user input field
+            document.getElementById("user-input").value = "";
+
+            // Get selected chatbot from the select element
+            var selectedChatbot = document.getElementById("chatbot-select").value;
+
+            // Get profile photo and sender name based on selected chatbot
+            var profilePhoto, senderName;
+            if (selectedChatbot === "chatbot1") {
+                profilePhoto = "static/profile_photo_chatbot1.png"; // Replace with the URL of the profile photo for Chatbot 1
+                senderName = "Chatbot 1";
+            } else if (selectedChatbot === "chatbot2") {
+                profilePhoto = "static/profile_photo_chatbot2.png"; // Replace with the URL of the profile photo for Chatbot 2
+                senderName = "Chatbot 2";
+            } else if (selectedChatbot === "chatbot3") {
+                profilePhoto = "static/profile_photo_chatbot3.png"; // Replace with the URL of the profile photo for Chatbot 3
+                senderName = "Chatbot 3";
+            }
+
+            // Display the user's message
+            displayMessage(userInput, "user", selectedChatbot, "Aytac", "static/your_profile_photo.png");
+
+            // Send the user's message and selected chatbot to the server for processing
+            fetch("/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: userInput,
+                    chatbot: selectedChatbot
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display AI's response from the selected chatbot
+                displayMessage(data.bot_response, "bot", data.bot_owner, senderName, profilePhoto);
+            })
+            .catch(error => {
+                console.error("Error sending message:", error);
+            });
+        }
+    </script>
+</body>
+</html>
